@@ -287,6 +287,7 @@ export default function CalendarPage() {
                 const isToday = day.fullDate.toDateString() === new Date().toDateString();
                 const isSelected = selectedDate && day.fullDate.toDateString() === selectedDate.toDateString();
                 const isCurrentMonth = day.isCurrentMonth;
+                const isTuesday = day.fullDate.getDay() === 2; // Tuesday is day 2 (0 = Sunday, 1 = Monday, 2 = Tuesday)
 
                 return (
                   <button
@@ -306,9 +307,15 @@ export default function CalendarPage() {
                         ? 'rgba(255, 255, 255, 0.15)'
                         : 'transparent',
                       border: isToday && !isSelected ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
-                      color: isCurrentMonth ? '#D8D8D8' : 'rgba(216, 216, 216, 0.4)',
+                      color: isTuesday && isCurrentMonth 
+                        ? '#FF4444' // Red color for Tuesday holidays
+                        : isCurrentMonth 
+                        ? '#D8D8D8' 
+                        : isTuesday
+                        ? 'rgba(255, 68, 68, 0.5)' // Dimmed red for Tuesday in other months
+                        : 'rgba(216, 216, 216, 0.4)',
                       fontSize: 'clamp(12px, 3.2vw, 14px)',
-                      fontWeight: isToday ? '600' : '400',
+                      fontWeight: isToday ? '600' : isTuesday ? '500' : '400',
                       cursor: isCurrentMonth ? 'pointer' : 'default',
                       transition: 'all 0.2s ease'
                     }}
