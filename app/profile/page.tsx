@@ -4,6 +4,8 @@ import MobileContainer from '@/components/MobileContainer';
 import { Bell, Search, Home as HomeIcon, FileText, Calendar, User, QrCode, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ProfilePage() {
   const [showQRModal, setShowQRModal] = useState(false); // QR code modal state
