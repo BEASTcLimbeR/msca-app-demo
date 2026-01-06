@@ -17,6 +17,7 @@ export default function Home() {
   const [weekOffset, setWeekOffset] = useState(0); // Track week navigation offset
   const [attendanceView, setAttendanceView] = useState<'Week' | 'Month'>('Week'); // Attendance view selector
   const attendancePercentage = 59; // Attendance percentage
+  const [animatedPercentage, setAnimatedPercentage] = useState(0); // Animated percentage for progress animation
   
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -103,8 +104,59 @@ export default function Home() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isDropdownOpen]);
+
+  // Animate progress percentage on mount and when percentage changes
+  useEffect(() => {
+    setAnimatedPercentage(0);
+    const duration = 1500; // 1.5 seconds
+    const steps = 60;
+    const increment = attendancePercentage / steps;
+    const stepDuration = duration / steps;
+    
+    let currentStep = 0;
+    const timer = setInterval(() => {
+      currentStep++;
+      const newValue = Math.min(increment * currentStep, attendancePercentage);
+      setAnimatedPercentage(newValue);
+      
+      if (currentStep >= steps) {
+        clearInterval(timer);
+      }
+    }, stepDuration);
+    
+    return () => clearInterval(timer);
+  }, [attendancePercentage]);
   return (
     <MobileContainer className="overflow-hidden">
+      {/* CSS Animations for Circular Progress */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes pulseGlow {
+          0%, 100% {
+            filter: drop-shadow(0 0 4px rgba(142, 0, 224, 0.4));
+          }
+          50% {
+            filter: drop-shadow(0 0 8px rgba(142, 0, 224, 0.7)) drop-shadow(0 0 12px rgba(212, 105, 236, 0.5));
+          }
+        }
+        @keyframes glowPulse {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.6;
+          }
+        }
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
+      `}} />
       {/* Background container - exact SVG dimensions: 375x788 with 28px radius */}
       <div className="relative w-full h-screen bg-black rounded-[28px] overflow-hidden" style={{ paddingBottom: '80px' }}>
         {/* Decorative Ellipse 1: cx="-17.5" cy="495.5" rx="118.5" ry="96.5" fill="#045069" fill-opacity="0.8" */}
@@ -652,7 +704,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Circular Progress Indicator - Matching Design with Thick Ring */}
+            {/* Circular Progress Indicator - Enhanced 3D Neomorphic Design */}
             <div
               style={{
                 display: 'flex',
@@ -664,7 +716,7 @@ export default function Home() {
                 minHeight: '150px'
               }}
             >
-              {/* SVG Circular Progress - Thick ring with rounded caps */}
+              {/* SVG Circular Progress - Pure neomorphic effect without square glow */}
               <svg
                 width="175.549"
                 height="175.549"
@@ -672,29 +724,65 @@ export default function Home() {
                 style={{
                   width: 'clamp(150px, 20vh, 175px)',
                   height: 'clamp(150px, 20vh, 175px)',
-                  transform: 'rotate(-90deg)' // Rotate to start from top
+                  transform: 'rotate(-90deg)'
                 }}
               >
-                {/* Background Circle - Light grey unfilled portion with dark outline */}
+                {/* Background Circle Base - Dark base for neomorphic recessed effect */}
                 <circle
                   cx="87.7745"
                   cy="87.7745"
                   r="73.549"
                   fill="none"
-                  stroke="rgba(217, 217, 217, 0.3)"
+                  stroke="rgba(30, 30, 30, 0.95)"
                   strokeWidth="16"
                   strokeLinecap="round"
                 />
-                {/* Dark grey outline for the entire ring */}
+                {/* Unfilled portion - Dark shadow on bottom-right for recessed depth */}
                 <circle
                   cx="87.7745"
                   cy="87.7745"
                   r="73.549"
                   fill="none"
-                  stroke="rgba(102, 102, 102, 0.4)"
-                  strokeWidth="1"
+                  stroke="rgba(15, 15, 15, 0.9)"
+                  strokeWidth="16"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(1 - animatedPercentage / 100) * 2 * Math.PI * 73.549} ${2 * Math.PI * 73.549}`}
+                  strokeDashoffset={(animatedPercentage / 100) * 2 * Math.PI * 73.549}
+                  style={{
+                    transition: 'stroke-dasharray 0.1s ease-out, stroke-dashoffset 0.1s ease-out'
+                  }}
                 />
-                {/* Progress Circle - Purple gradient filled portion with rounded caps */}
+                {/* Light highlight on top-left of unfilled portion - creates embossed neomorphic effect */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="73.549"
+                  fill="none"
+                  stroke="rgba(55, 55, 55, 0.7)"
+                  strokeWidth="14"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(1 - animatedPercentage / 100) * 2 * Math.PI * 73.549 * 0.4} ${2 * Math.PI * 73.549}`}
+                  strokeDashoffset={(animatedPercentage / 100) * 2 * Math.PI * 73.549 + (1 - animatedPercentage / 100) * 2 * Math.PI * 73.549 * 0.1}
+                  style={{
+                    transition: 'stroke-dasharray 0.1s ease-out, stroke-dashoffset 0.1s ease-out'
+                  }}
+                />
+                {/* Additional subtle highlight for more depth on unfilled portion */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="73.549"
+                  fill="none"
+                  stroke="rgba(70, 70, 70, 0.4)"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(1 - animatedPercentage / 100) * 2 * Math.PI * 73.549 * 0.25} ${2 * Math.PI * 73.549}`}
+                  strokeDashoffset={(animatedPercentage / 100) * 2 * Math.PI * 73.549 + (1 - animatedPercentage / 100) * 2 * Math.PI * 73.549 * 0.05}
+                  style={{
+                    transition: 'stroke-dasharray 0.1s ease-out, stroke-dashoffset 0.1s ease-out'
+                  }}
+                />
+                {/* Progress Circle - Purple gradient with animated fill */}
                 <circle
                   cx="87.7745"
                   cy="87.7745"
@@ -703,21 +791,48 @@ export default function Home() {
                   stroke="url(#attendanceGradient)"
                   strokeWidth="16"
                   strokeLinecap="round"
-                  strokeDasharray={`${(attendancePercentage / 100) * 2 * Math.PI * 73.549} ${2 * Math.PI * 73.549}`}
+                  strokeDasharray={`${(animatedPercentage / 100) * 2 * Math.PI * 73.549} ${2 * Math.PI * 73.549}`}
                   strokeDashoffset="0"
                   style={{
-                    transition: 'stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                    filter: 'drop-shadow(0 2px 4px rgba(142, 0, 224, 0.4))'
+                    transition: 'stroke-dasharray 0.1s ease-out',
+                    animation: 'pulseGlow 2s ease-in-out infinite'
                   }}
                 />
-                {/* Inner circle - transparent to match background */}
+                {/* Outer glow ring for progress - animated circular glow effect */}
                 <circle
                   cx="87.7745"
                   cy="87.7745"
-                  r="65"
-                  fill="transparent"
+                  r="77"
+                  fill="none"
+                  stroke="url(#attendanceGlow)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(animatedPercentage / 100) * 2 * Math.PI * 77} ${2 * Math.PI * 77}`}
+                  strokeDashoffset="0"
+                  opacity="0.5"
+                  style={{
+                    transition: 'stroke-dasharray 0.1s ease-out, opacity 0.3s ease',
+                    animation: 'glowPulse 2s ease-in-out infinite 0.3s'
+                  }}
                 />
-                {/* Gradient Definition - Purple to pink gradient */}
+                {/* Inner glow ring for progress - animated depth */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="70"
+                  fill="none"
+                  stroke="url(#attendanceGlow)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(animatedPercentage / 100) * 2 * Math.PI * 70} ${2 * Math.PI * 70}`}
+                  strokeDashoffset="0"
+                  opacity="0.3"
+                  style={{
+                    transition: 'stroke-dasharray 0.1s ease-out, opacity 0.3s ease',
+                    animation: 'glowPulse 2s ease-in-out infinite 0.6s'
+                  }}
+                />
+                {/* Gradient Definitions */}
                 <defs>
                   <linearGradient 
                     id="attendanceGradient" 
@@ -730,10 +845,21 @@ export default function Home() {
                     <stop stopColor="#8E00E0" stopOpacity="1" />
                     <stop offset="1" stopColor="#D469EC" stopOpacity="1" />
                   </linearGradient>
+                  <linearGradient 
+                    id="attendanceGlow" 
+                    x1="87.7745" 
+                    y1="0" 
+                    x2="87.7745" 
+                    y2="175.549" 
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="#D469EC" stopOpacity="0.6" />
+                    <stop offset="1" stopColor="#8E00E0" stopOpacity="0.6" />
+                  </linearGradient>
                 </defs>
               </svg>
               
-              {/* Percentage Text - Centered, thin and lighter */}
+              {/* Percentage Text - Animated with fade-in and number counting */}
               <div
                 style={{
                   position: 'absolute',
@@ -745,11 +871,13 @@ export default function Home() {
                   fontWeight: '300',
                   letterSpacing: '0.3px',
                   fontFamily: 'system-ui, -apple-system, sans-serif',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-                  zIndex: 10
+                  textShadow: '3px 3px 6px rgba(0, 0, 0, 0.6), -1px -1px 3px rgba(255, 255, 255, 0.15), 0 0 10px rgba(0, 0, 0, 0.3)',
+                  zIndex: 10,
+                  animation: 'fadeInScale 0.8s ease-out',
+                  transition: 'transform 0.3s ease'
                 }}
               >
-                {attendancePercentage}%
+                {Math.round(animatedPercentage)}%
               </div>
             </div>
           </div>
