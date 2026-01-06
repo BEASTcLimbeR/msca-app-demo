@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Home() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function Home() {
   const [attendanceView, setAttendanceView] = useState<'Week' | 'Month'>('Week'); // Attendance view selector
   const attendancePercentage = 59; // Attendance percentage
   const [animatedPercentage, setAnimatedPercentage] = useState(0); // Animated percentage for progress animation
+  const [showQRModal, setShowQRModal] = useState(false); // QR code modal state
   
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -127,6 +129,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [attendancePercentage]);
   return (
+    <>
     <MobileContainer className="overflow-hidden">
       {/* CSS Animations for Circular Progress */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -949,13 +952,17 @@ export default function Home() {
 
         {/* QR Code Circle - matching qr-code-circle.svg - Responsive */}
         {/* Positioned absolutely with negative top to float above navbar - 50% extends above */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2"
+        <button
+          onClick={() => setShowQRModal(true)}
+          className="absolute left-1/2 -translate-x-1/2 cursor-pointer"
           style={{
             top: 'clamp(-28px, -5.6vw, -35.5px)', // Negative top: responsive, maintains 50% above
             width: 'clamp(56px, 18.9vw, 71px)', // Responsive width
             height: 'clamp(56px, 18.9vw, 71px)', // Responsive height
-            zIndex: 50 // Above navbar items
+            zIndex: 50, // Above navbar items
+            border: 'none',
+            background: 'transparent',
+            padding: 0
           }}
         >
           {/* Drop shadow - dy=6, blur stdDeviation=3, opacity 0.4 */}
@@ -1018,9 +1025,127 @@ export default function Home() {
               zIndex: 2
             }}
           />
-        </div>
+        </button>
+
     </div>
     </MobileContainer>
+    
+    {/* QR Code Modal - Rendered outside MobileContainer for proper centering */}
+    {showQRModal && (
+      <div
+        className="fixed inset-0 flex items-center justify-center z-[10000]"
+        style={{
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          margin: 0,
+          padding: 0
+        }}
+        onClick={() => setShowQRModal(false)}
+      >
+        <div
+          className="relative"
+          style={{
+            width: 'clamp(280px, 75vw, 320px)',
+            padding: 'clamp(24px, 6.4vw, 32px)',
+            borderRadius: '20px',
+            background: 'linear-gradient(180deg, rgba(90, 104, 112, 0.95) 0%, rgba(13, 55, 60, 0.95) 100%)',
+            border: '0.5px solid rgba(133, 133, 133, 0.5)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+            margin: 'auto'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setShowQRModal(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            ×
+          </button>
+
+          {/* QR Code Container */}
+          <div
+            className="flex flex-col items-center"
+            style={{
+              gap: 'clamp(16px, 4.3vw, 20px)'
+            }}
+          >
+            <h3
+              style={{
+                color: '#FFFFFF',
+                fontSize: 'clamp(18px, 4.8vw, 22px)',
+                fontWeight: '600',
+                letterSpacing: '0.3px',
+                marginBottom: 'clamp(8px, 2.1vw, 12px)'
+              }}
+            >
+              Your QR Code
+            </h3>
+            
+            {/* QR Code Display Area */}
+            <div
+              style={{
+                width: 'clamp(240px, 64vw, 280px)',
+                height: 'clamp(240px, 64vw, 280px)',
+                borderRadius: '16px',
+                background: '#FFFFFF',
+                padding: 'clamp(16px, 4.3vw, 20px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              {/* QR Code - Generate QR code for user ID or check-in code */}
+              <QRCodeSVG
+                value={`MSCA-USER-${selectedDate || 'CHECKIN'}-${new Date().getTime()}`}
+                size={240}
+                level="H"
+                includeMargin={false}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  maxWidth: '240px',
+                  maxHeight: '240px'
+                }}
+              />
+            </div>
+
+            <p
+              style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: 'clamp(12px, 3.2vw, 14px)',
+                textAlign: 'center',
+                marginTop: 'clamp(8px, 2.1vw, 12px)'
+              }}
+            >
+              Rutvij Deo member #43531
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
