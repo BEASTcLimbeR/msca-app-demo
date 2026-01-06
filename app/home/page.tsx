@@ -15,6 +15,8 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0); // Track week navigation offset
+  const [attendanceView, setAttendanceView] = useState<'Week' | 'Month'>('Week'); // Attendance view selector
+  const attendancePercentage = 59; // Attendance percentage
   
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -234,9 +236,9 @@ export default function Home() {
           className="absolute"
           style={{
             left: 'clamp(15px, 4.2vw, 15.75px)', // Responsive left positioning
-            top: 'clamp(130px, 17.7vh, 139.75px)', // Responsive top positioning
+            top: 'clamp(140px, 18.5vh, 150px)', // Moved down slightly for better spacing from top
             width: 'clamp(300px, 90.8vw, 340.5px)', // Responsive width: 90.8% of 375px
-            height: 'clamp(350px, 50.4vh, 397.5px)', // Responsive height
+            height: 'clamp(280px, 40vh, 314px)', // Decreased height from below: max changed from 397.5px to 314px
             borderRadius: '20.25px',
             background: 'linear-gradient(180deg, rgba(90, 104, 112, 0.4) 0%, rgba(13, 55, 60, 0.4) 100%)',
             border: '0.5px solid rgba(133, 133, 133, 0.5)',
@@ -476,9 +478,11 @@ export default function Home() {
             <span
               style={{
                 color: 'rgba(255, 255, 255, 0.8)',
-                fontSize: 'clamp(11px, 2.9vw, 13px)', // Text size unchanged
+                fontSize: 'clamp(11px, 2.9vw, 13px)',
                 fontWeight: '400',
-                letterSpacing: '0.2px'
+                letterSpacing: '0.2px',
+                lineHeight: '1.2',
+                textAlign: 'center'
               }}
             >
               {(() => {
@@ -527,17 +531,227 @@ export default function Home() {
             <span
               style={{
                 color: 'rgba(255, 255, 255, 0.8)',
-                fontSize: 'clamp(11px, 2.9vw, 13px)', // Text size unchanged
+                fontSize: 'clamp(11px, 2.9vw, 13px)',
                 fontWeight: '400',
-                letterSpacing: '0.2px'
+                letterSpacing: '0.2px',
+                lineHeight: '1.2',
+                textAlign: 'center'
               }}
             >
               {(() => {
                 const selectedDateObj = new Date(selectedDate);
                 const dayName = dayNames[selectedDateObj.getDay()];
-                return `${dayName} 7:00 PM`;
+                return `${dayName} 8:56 AM`;
               })()}
             </span>
+          </div>
+        </div>
+
+        {/* Attendance Component - Below Check-in/Check-out Cards */}
+        <div 
+          className="absolute"
+          style={{
+            left: 'clamp(15px, 4.2vw, 15.75px)',
+            top: 'clamp(450px, 60vh, 480px)', // Increased top spacing to avoid collision with check-in/check-out cards
+            width: 'clamp(300px, 90.8vw, 340.5px)',
+            height: 'clamp(250px, 33vh, 280px)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'clamp(12px, 3.2vw, 16px)'
+          }}
+        >
+          {/* Attendance Title */}
+          <h2 
+            style={{
+              color: '#FFFFFF',
+              fontSize: 'clamp(18px, 4.8vw, 22px)',
+              fontWeight: '600',
+              letterSpacing: '0.3px',
+              marginBottom: 'clamp(4px, 1.1vw, 6px)'
+            }}
+          >
+            Attendance
+          </h2>
+
+          {/* Attendance Card */}
+          <div
+            style={{
+              flex: 1,
+              borderRadius: '25.5px',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(102, 102, 102, 0.1) 100%)',
+              border: '0.5px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(17.5px)',
+              padding: 'clamp(20px, 5.3vw, 24px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'clamp(16px, 4.3vw, 20px)',
+              boxShadow: 'inset 0 0 0 0.5px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            {/* Segmented Control - Week/Month with Neomorphic Effect and Smooth Transitions */}
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                borderRadius: '16.5px',
+                background: 'rgba(30, 30, 30, 0.6)',
+                padding: '4px',
+                gap: '4px',
+                boxShadow: 'inset 4px 4px 8px rgba(0, 0, 0, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.05)'
+              }}
+            >
+              <button
+                onClick={() => setAttendanceView('Week')}
+                style={{
+                  flex: 1,
+                  padding: 'clamp(8px, 2.1vw, 10px) clamp(12px, 3.2vw, 16px)',
+                  borderRadius: '12.5px',
+                  border: 'none',
+                  background: attendanceView === 'Week' 
+                    ? 'rgba(20, 20, 20, 0.8)' // Darker for pressed/inset effect
+                    : 'rgba(40, 40, 40, 0.6)', // Lighter for raised/outset effect
+                  color: attendanceView === 'Week' ? '#FFFFFF' : '#D8D8D8',
+                  fontSize: 'clamp(12px, 3.2vw, 14px)',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  zIndex: attendanceView === 'Week' ? 2 : 1,
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: attendanceView === 'Week'
+                    ? 'inset 3px 3px 6px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.03)' // Inset shadow for pressed
+                    : '4px 4px 8px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.05)', // Outset shadow for raised
+                  transform: attendanceView === 'Week' ? 'scale(0.98)' : 'scale(1)'
+                }}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setAttendanceView('Month')}
+                style={{
+                  flex: 1,
+                  padding: 'clamp(8px, 2.1vw, 10px) clamp(12px, 3.2vw, 16px)',
+                  borderRadius: '12.5px',
+                  border: 'none',
+                  background: attendanceView === 'Month' 
+                    ? 'rgba(20, 20, 20, 0.8)' // Darker for pressed/inset effect
+                    : 'rgba(40, 40, 40, 0.6)', // Lighter for raised/outset effect
+                  color: attendanceView === 'Month' ? '#FFFFFF' : '#D8D8D8',
+                  fontSize: 'clamp(12px, 3.2vw, 14px)',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  zIndex: attendanceView === 'Month' ? 2 : 1,
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: attendanceView === 'Month'
+                    ? 'inset 3px 3px 6px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.03)' // Inset shadow for pressed
+                    : '4px 4px 8px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.05)', // Outset shadow for raised
+                  transform: attendanceView === 'Month' ? 'scale(0.98)' : 'scale(1)'
+                }}
+              >
+                Month
+              </button>
+            </div>
+
+            {/* Circular Progress Indicator - Matching Design with Thick Ring */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                position: 'relative',
+                width: '100%',
+                height: 'clamp(150px, 20vh, 175px)',
+                minHeight: '150px'
+              }}
+            >
+              {/* SVG Circular Progress - Thick ring with rounded caps */}
+              <svg
+                width="175.549"
+                height="175.549"
+                viewBox="0 0 175.549 175.549"
+                style={{
+                  width: 'clamp(150px, 20vh, 175px)',
+                  height: 'clamp(150px, 20vh, 175px)',
+                  transform: 'rotate(-90deg)' // Rotate to start from top
+                }}
+              >
+                {/* Background Circle - Light grey unfilled portion with dark outline */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="73.549"
+                  fill="none"
+                  stroke="rgba(217, 217, 217, 0.3)"
+                  strokeWidth="16"
+                  strokeLinecap="round"
+                />
+                {/* Dark grey outline for the entire ring */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="73.549"
+                  fill="none"
+                  stroke="rgba(102, 102, 102, 0.4)"
+                  strokeWidth="1"
+                />
+                {/* Progress Circle - Purple gradient filled portion with rounded caps */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="73.549"
+                  fill="none"
+                  stroke="url(#attendanceGradient)"
+                  strokeWidth="16"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(attendancePercentage / 100) * 2 * Math.PI * 73.549} ${2 * Math.PI * 73.549}`}
+                  strokeDashoffset="0"
+                  style={{
+                    transition: 'stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                    filter: 'drop-shadow(0 2px 4px rgba(142, 0, 224, 0.4))'
+                  }}
+                />
+                {/* Inner circle - transparent to match background */}
+                <circle
+                  cx="87.7745"
+                  cy="87.7745"
+                  r="65"
+                  fill="transparent"
+                />
+                {/* Gradient Definition - Purple to pink gradient */}
+                <defs>
+                  <linearGradient 
+                    id="attendanceGradient" 
+                    x1="87.7745" 
+                    y1="0" 
+                    x2="87.7745" 
+                    y2="175.549" 
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop stopColor="#8E00E0" stopOpacity="1" />
+                    <stop offset="1" stopColor="#D469EC" stopOpacity="1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              
+              {/* Percentage Text - Centered, thin and lighter */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  color: '#FFFFFF',
+                  fontSize: 'clamp(32px, 8.5vw, 42px)',
+                  fontWeight: '300',
+                  letterSpacing: '0.3px',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                  zIndex: 10
+                }}
+              >
+                {attendancePercentage}%
+              </div>
+            </div>
           </div>
         </div>
 
