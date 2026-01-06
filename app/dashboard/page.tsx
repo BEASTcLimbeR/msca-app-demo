@@ -6,16 +6,179 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
+export default function Dashboard() {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date().toDateString());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0); // Track week navigation offset
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null); // Track selected slot index
+  const [selectedDuration, setSelectedDuration] = useState<string | null>(null); // Track selected duration
+  const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false); // Track duration dropdown state
+  const durationRef = useRef<HTMLDivElement>(null); // Ref for duration dropdown
   
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  
+  // Time slots configuration
+  const timeSlots = [
+    { time: '7:00', period: 'AM' },
+    { time: '9:30', period: 'AM' },
+    { time: '12:00', period: 'PM' },
+    { time: '12:00', period: 'PM' }
+  ];
+  const TOTAL_SLOTS = 40;
+
+  // Generate deterministic random number based on date and slot index
+  const getSlotData = (date: Date, slotIndex: number) => {
+    // Create a seed from date and slot index for deterministic randomness
+    const seed = date.getTime() + slotIndex * 1000;
+    const random = (seed * 9301 + 49297) % 233280;
+    const normalized = random / 233280;
+    
+    // Generate booked slots (0-40)
+    const booked = Math.floor(normalized * 41);
+    const remaining = TOTAL_SLOTS - booked;
+    const percentage = (booked / TOTAL_SLOTS) * 100;
+
+    // Determine status and color based on percentage
+    let status: string;
+    let statusText: string;
+    let backgroundColor: string;
+    let textColor: string = '#FFFFFF';
+    let dividerColor: string = '#FFFFFF';
+
+    if (remaining === 0) {
+      // Fully Booked
+      status = 'full';
+      statusText = 'Fully Booked';
+      backgroundColor = 'rgba(102, 102, 102, 0.4)';
+      textColor = '#FFFFFF';
+      dividerColor = '#FFFFFF';
+    } else if (percentage >= 95) {
+      // Red: 95-100% (Almost Full)
+      status = 'almost-full';
+      statusText = 'Almost Full';
+      backgroundColor = 'rgba(196, 0, 0, 0.3)';
+      textColor = '#D8D8D8';
+      dividerColor = '#797979';
+    } else if (percentage >= 50) {
+      // Yellow: 50-80% (Limited)
+      status = 'limited';
+      statusText = 'Limited';
+      backgroundColor = 'rgba(255, 200, 0, 0.4)';
+      textColor = '#FFFFFF';
+      dividerColor = '#FFFFFF';
+    } else {
+      // Green: <50% (Available)
+      status = 'available';
+      statusText = 'Available';
+      backgroundColor = 'rgba(13, 255, 0, 0.4)';
+      textColor = '#FFFFFF';
+      dividerColor = '#FFFFFF';
+    }
+
+    return {
+      remaining,
+      booked,
+      percentage,
+      status,
+      statusText,
+      backgroundColor,
+      textColor,
+      dividerColor
+    };
+  };
+
+  // Get slot data for selected date
+  const getSelectedDateSlots = () => {
+    const selectedDateObj = new Date(selectedDate);
+    return timeSlots.map((slot, index) => ({
+      ...slot,
+      ...getSlotData(selectedDateObj, index)
+    }));
+  };
+
+  // Check if selected date is Tuesday
+  const isTuesday = () => {
+    const selectedDateObj = new Date(selectedDate);
+    return selectedDateObj.getDay() === 2; // 2 = Tuesday
+  };
+  
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  // Reset selected slot when date changes
+  useEffect(() => {
+    setSelectedSlotIndex(null);
+  }, [selectedDate]);
+
+  // Close duration dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (durationRef.current && !durationRef.current.contains(event.target as Node)) {
+        setIsDurationDropdownOpen(false);
+      }
+    };
+
+    if (isDurationDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDurationDropdownOpen]);
+
+  // Navigate to booking confirmation page
+  const handleBooking = () => {
+    if (selectedSlotIndex === null) {
+      alert('Please select a slot first.');
+      return;
+    }
+
+    if (selectedDuration === null) {
+      alert('Please select a duration first.');
+      return;
+    }
+
+    // Get selected slot data
+    const selectedSlot = getSelectedDateSlots()[selectedSlotIndex];
+    const selectedDateObj = new Date(selectedDate);
+    
+    // Format date for display
+    const formattedDate = `${selectedDateObj.getDate()} ${monthNames[selectedDateObj.getMonth()]} ${selectedDateObj.getFullYear()}`;
+    
+    // Format time for display
+    const formattedTime = `${selectedSlot.time} ${selectedSlot.period}`;
+    
+    // Navigate to booking page with query params
+    const params = new URLSearchParams({
+      date: formattedDate,
+      time: formattedTime,
+      duration: selectedDuration,
+      slotIndex: selectedSlotIndex.toString(),
+      dateString: selectedDate
+    });
+    
+    router.push(`/booking?${params.toString()}`);
+  };
   
   // Get current week dates - current date always in the middle (4th position)
   const currentWeek = useMemo(() => {
@@ -440,494 +603,456 @@ export default function Home() {
               padding: '12px'
             }}
           >
-            {/* Row 1: Red and Green tabs - Responsive */}
-            <div className="flex gap-2 justify-center w-full">
-              {/* Red Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(196, 0, 0, 0.3)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
+            {isTuesday() ? (
+              /* Holiday Message for Tuesday */
+              <div className="w-full flex items-center justify-center" style={{ height: '100%' }}>
+                <span
                   style={{
-                    background: 'transparent'
+                    color: '#FFFFFF',
+                    fontSize: 'clamp(16px, 4vw, 20px)',
+                    fontWeight: '600',
+                    letterSpacing: '0.3px'
                   }}
                 >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      7:00
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      AM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#797979',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Almost Full
-                    </span>
-                    {/* Horizontal divider */}
-                    <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#797979',
-                        opacity: 0.5
-                      }}
-                    />
-                    <span
-                      className=""
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '10px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      4 Slots Remaining
-                    </span>
-                  </div>
-                </div>
+                  Holiday
+                </span>
               </div>
-
-              {/* Green Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(13, 255, 0, 0.4)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      9:30
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      AM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#FFFFFF',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Available
-                    </span>
-                    {/* Horizontal divider */}
+            ) : (
+              <>
+                {/* Row 1: First two slots */}
+                <div className="flex gap-2 justify-center w-full">
+                  {getSelectedDateSlots().slice(0, 2).map((slot, index) => {
+                    const isSelected = selectedSlotIndex === index;
+                    const isFullyBooked = slot.remaining === 0;
+                    const isClickable = !isFullyBooked;
+                    
+                    return (
                     <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#FFFFFF',
-                        opacity: 0.5
+                      key={index}
+                      onClick={() => {
+                        if (isClickable) {
+                          setSelectedSlotIndex(index);
+                        }
                       }}
-                    />
-                    <span
-                      className=""
+                      className="relative"
                       style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap'
+                        width: 'clamp(120px, 35.7vw, 134px)',
+                        height: 'clamp(40px, 5.6vh, 44px)',
+                        borderRadius: '19.5px',
+                        background: slot.backgroundColor,
+                        backdropFilter: 'blur(17.5px)',
+                        border: isSelected ? '2px solid rgba(255, 255, 255, 0.8)' : 'none',
+                        boxShadow: isSelected
+                          ? `
+                            inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+                            inset -3px -3px 6px rgba(255, 255, 255, 0.1),
+                            6px 6px 12px rgba(0, 0, 0, 0.2),
+                            -3px -3px 6px rgba(255, 255, 255, 0.05),
+                            0 0 0 2px rgba(255, 255, 255, 0.5)
+                          `
+                          : `
+                            inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+                            inset -3px -3px 6px rgba(255, 255, 255, 0.1),
+                            6px 6px 12px rgba(0, 0, 0, 0.2),
+                            -3px -3px 6px rgba(255, 255, 255, 0.05)
+                          `,
+                        cursor: isClickable ? 'pointer' : 'not-allowed',
+                        opacity: isFullyBooked ? 0.6 : 1,
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      40 Slots Remaining
-                    </span>
-                  </div>
+                      <div
+                        className="w-full h-full rounded-[19.5px] flex items-center px-2"
+                        style={{
+                          background: 'transparent'
+                        }}
+                      >
+                        {/* Left side - Time */}
+                        <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
+                          <span
+                            className="font-medium"
+                            style={{
+                              color: slot.textColor,
+                              fontSize: '11px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2'
+                            }}
+                          >
+                            {slot.time}
+                          </span>
+                          <span
+                            className=""
+                            style={{
+                              color: slot.textColor,
+                              fontSize: '9px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2'
+                            }}
+                          >
+                            {slot.period}
+                          </span>
+                        </div>
+
+                        {/* Vertical divider */}
+                        <div
+                          className="mx-1"
+                          style={{
+                            width: '0.5px',
+                            height: '32px',
+                            background: slot.dividerColor,
+                            opacity: 0.5
+                          }}
+                        />
+
+                        {/* Right side - Status info */}
+                        <div className="flex-1 flex flex-col justify-center">
+                          <span
+                            className="mb-0.5"
+                            style={{
+                              color: slot.textColor,
+                              fontSize: slot.status === 'limited' ? '9px' : '11px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2',
+                              fontWeight: 500
+                            }}
+                          >
+                            {slot.statusText}
+                          </span>
+                          {/* Horizontal divider */}
+                          <div
+                            className="mb-0.5"
+                            style={{
+                              width: '100%',
+                              height: '0.5px',
+                              background: slot.dividerColor,
+                              opacity: 0.5
+                            }}
+                          />
+                          <span
+                            className=""
+                            style={{
+                              color: slot.textColor,
+                              fontSize: slot.status === 'full' ? '10px' : slot.status === 'limited' ? '8px' : '9px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2',
+                              fontWeight: 400,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {slot.remaining === 0 ? 'Booked' : `${slot.remaining} Slots Remaining`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    );
+                  })}
                 </div>
-              </div>
-            </div>
 
-            {/* Row 2: Yellow and Grey tabs - Responsive */}
-            <div className="flex gap-2 justify-center w-full">
-              {/* Yellow Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(255, 200, 0, 0.4)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      12:00
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      PM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#FFFFFF',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Limited
-                    </span>
-                    {/* Horizontal divider */}
+                {/* Row 2: Last two slots */}
+                <div className="flex gap-2 justify-center w-full">
+                  {getSelectedDateSlots().slice(2, 4).map((slot, index) => {
+                    const actualIndex = index + 2;
+                    const isSelected = selectedSlotIndex === actualIndex;
+                    const isFullyBooked = slot.remaining === 0;
+                    const isClickable = !isFullyBooked;
+                    
+                    return (
                     <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#FFFFFF',
-                        opacity: 0.5
+                      key={actualIndex}
+                      onClick={() => {
+                        if (isClickable) {
+                          setSelectedSlotIndex(actualIndex);
+                        }
                       }}
-                    />
-                    <span
-                      className=""
+                      className="relative"
                       style={{
-                        color: '#FFFFFF',
-                        fontSize: '8px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap'
+                        width: 'clamp(120px, 35.7vw, 134px)',
+                        height: 'clamp(40px, 5.6vh, 44px)',
+                        borderRadius: '19.5px',
+                        background: slot.backgroundColor,
+                        backdropFilter: 'blur(17.5px)',
+                        border: isSelected ? '2px solid rgba(255, 255, 255, 0.8)' : 'none',
+                        boxShadow: isSelected
+                          ? `
+                            inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+                            inset -3px -3px 6px rgba(255, 255, 255, 0.1),
+                            6px 6px 12px rgba(0, 0, 0, 0.2),
+                            -3px -3px 6px rgba(255, 255, 255, 0.05),
+                            0 0 0 2px rgba(255, 255, 255, 0.5)
+                          `
+                          : `
+                            inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+                            inset -3px -3px 6px rgba(255, 255, 255, 0.1),
+                            6px 6px 12px rgba(0, 0, 0, 0.2),
+                            -3px -3px 6px rgba(255, 255, 255, 0.05)
+                          `,
+                        cursor: isClickable ? 'pointer' : 'not-allowed',
+                        opacity: isFullyBooked ? 0.6 : 1,
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      15 Slots Remaining
-                    </span>
-                  </div>
+                      <div
+                        className="w-full h-full rounded-[19.5px] flex items-center px-2"
+                        style={{
+                          background: 'transparent'
+                        }}
+                      >
+                        {/* Left side - Time */}
+                        <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
+                          <span
+                            className="font-medium"
+                            style={{
+                              color: slot.textColor,
+                              fontSize: '11px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2'
+                            }}
+                          >
+                            {slot.time}
+                          </span>
+                          <span
+                            className=""
+                            style={{
+                              color: slot.textColor,
+                              fontSize: '9px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2'
+                            }}
+                          >
+                            {slot.period}
+                          </span>
+                        </div>
+
+                        {/* Vertical divider */}
+                        <div
+                          className="mx-1"
+                          style={{
+                            width: '0.5px',
+                            height: '32px',
+                            background: slot.dividerColor,
+                            opacity: 0.5
+                          }}
+                        />
+
+                        {/* Right side - Status info */}
+                        <div className="flex-1 flex flex-col justify-center">
+                          <span
+                            className="mb-0.5"
+                            style={{
+                              color: slot.textColor,
+                              fontSize: slot.status === 'limited' ? '9px' : '11px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2',
+                              fontWeight: 500
+                            }}
+                          >
+                            {slot.statusText}
+                          </span>
+                          {/* Horizontal divider */}
+                          <div
+                            className="mb-0.5"
+                            style={{
+                              width: '100%',
+                              height: '0.5px',
+                              background: slot.dividerColor,
+                              opacity: 0.5
+                            }}
+                          />
+                          <span
+                            className=""
+                            style={{
+                              color: slot.textColor,
+                              fontSize: slot.status === 'full' ? '10px' : slot.status === 'limited' ? '8px' : '9px',
+                              letterSpacing: '0.2px',
+                              lineHeight: '1.2',
+                              fontWeight: 400,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {slot.remaining === 0 ? 'Booked' : `${slot.remaining} Slots Remaining`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    );
+                  })}
                 </div>
-              </div>
-
-              {/* Grey Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(255, 255, 255, 0.4)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      12:00
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      PM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#FFFFFF',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Full
-                    </span>
-                    {/* Horizontal divider */}
-                    <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#FFFFFF',
-                        opacity: 0.5
-                      }}
-                    />
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '10px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400
-                      }}
-                    >
-                      Booked
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Registration Tab - Mobile-First Responsive with Link */}
-        <Link href="/register">
-          <div
-            className="absolute cursor-pointer"
-            style={{
-              left: 'clamp(20px, 6.9vw, 26px)', // Responsive left positioning
-              top: 'clamp(380px, 52.7vh, 415px)', // Responsive top positioning
-              width: 'clamp(280px, 86.1vw, 323px)', // Responsive width: 86.1% of 375px
-              height: 'clamp(60px, 8.8vh, 69px)', // Responsive height
-              borderRadius: '20.25px',
-              background: 'linear-gradient(180deg, rgba(90, 104, 112, 0.4) 0%, rgba(13, 55, 60, 0.4) 100%)',
-              border: '0.5px solid rgba(133, 133, 133, 0.5)',
-              backdropFilter: 'blur(17.5px)',
-              boxShadow: 'inset 0 0 0 0.5px rgba(0, 0, 0, 0.3)',
-              transition: 'opacity 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            <div
-              className="w-full h-full rounded-[20.25px] flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(180deg, rgba(90, 104, 112, 0.4) 0%, rgba(13, 55, 60, 0.4) 100%)'
-              }}
-            >
-              <span
-                className="font-medium"
-                style={{
-                  color: '#D8D8D8',
-                  fontSize: '16px',
-                  letterSpacing: '0.3px'
-                }}
-              >
-                Click here to register
-              </span>
-            </div>
-          </div>
-        </Link>
-
-        {/* Book Slots Tab - Mobile-First Responsive */}
-        {/* From book-slots-tab.svg: width="320" height="34" */}
+        {/* Duration Dropdown Button - Above Book Slots */}
         <div
+          ref={durationRef}
           className="absolute"
           style={{
-            left: 'clamp(22px, 7.3vw, 27.5px)', // Responsive left positioning
-            top: 'clamp(450px, 62.7vh, 494px)', // Responsive top positioning
-            width: 'clamp(280px, 85.3vw, 320px)', // Responsive width: 85.3% of 375px
-            height: 'clamp(30px, 4.3vh, 34px)', // Responsive height
-            borderRadius: '17px',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(102, 102, 102, 0.5) 100%)',
-            padding: '1px',
-            backdropFilter: 'blur(17.5px)'
+            left: 'clamp(20px, 6.9vw, 26px)',
+            top: 'clamp(380px, 52.7vh, 415px)', // Same position as Book Slots was before
+            width: 'clamp(280px, 86.1vw, 323px)',
+            zIndex: 10000
           }}
         >
-          <div
-            className="w-full h-full rounded-[17px] flex items-center justify-center"
+          <button
+            type="button"
+            onClick={() => setIsDurationDropdownOpen(!isDurationDropdownOpen)}
+            className="w-full cursor-pointer"
             style={{
-              background: 'rgba(30, 255, 0, 0.4)', // #1EFF00 with 0.4 opacity for visibility
-              borderRadius: '17px'
+              height: 'clamp(44px, 6vh, 52px)',
+              borderRadius: '20.25px',
+              background: selectedDuration
+                ? 'linear-gradient(135deg, rgba(30, 144, 255, 0.6) 0%, rgba(13, 100, 255, 0.6) 100%)'
+                : 'rgba(102, 102, 102, 0.5)',
+              border: '0.5px solid rgba(133, 133, 133, 0.5)',
+              backdropFilter: 'blur(17.5px)',
+              boxShadow: selectedDuration
+                ? '0 4px 12px rgba(30, 144, 255, 0.3)'
+                : 'none',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingLeft: 'clamp(16px, 4.3vw, 20px)',
+              paddingRight: 'clamp(16px, 4.3vw, 20px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.9';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1';
             }}
           >
             <span
               className="font-medium"
               style={{
-                color: '#D8D8D8',
-                fontSize: '14px',
+                color: '#FFFFFF',
+                fontSize: 'clamp(15px, 4vw, 18px)',
                 letterSpacing: '0.3px'
               }}
             >
-              Book Slots
+              {selectedDuration || 'Duration'}
+            </span>
+            <ChevronDown
+              size={20}
+              style={{
+                color: '#FFFFFF',
+                transform: isDurationDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease'
+              }}
+            />
+          </button>
+
+          {/* Dropdown Menu */}
+          {isDurationDropdownOpen && (
+            <div
+              className="absolute w-full mt-2"
+              style={{
+                borderRadius: '15px',
+                background: 'rgba(30, 30, 30, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                overflow: 'hidden',
+                zIndex: 10001
+              }}
+            >
+              {['1 Month', '3 Months', '6 Months', 'Yearly', 'Single Slot pass', 'Full Day pass'].map((option, index) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDuration(option);
+                    setIsDurationDropdownOpen(false);
+                  }}
+                  className="w-full text-left"
+                  style={{
+                    padding: 'clamp(12px, 3.2vw, 16px) clamp(16px, 4.3vw, 20px)',
+                    color: '#FFFFFF',
+                    fontSize: 'clamp(14px, 3.7vw, 16px)',
+                    background: selectedDuration === option
+                      ? 'rgba(30, 144, 255, 0.3)'
+                      : 'transparent',
+                    borderBottom: index < 5 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                    transition: 'background 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedDuration !== option) {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedDuration !== option) {
+                      e.currentTarget.style.background = 'transparent';
+                    }
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Book Slots Tab - Mobile-First Responsive with Razorpay Payment */}
+        {/* Positioned where "Click here to register" button was */}
+        <button
+          type="button"
+          onClick={handleBooking}
+          disabled={!razorpayLoaded || selectedSlotIndex === null || selectedDuration === null}
+          className="absolute cursor-pointer"
+          style={{
+            left: 'clamp(20px, 6.9vw, 26px)', // Responsive left positioning
+            top: 'clamp(440px, 61vh, 480px)', // Responsive top positioning - moved down to make room for another button
+            width: 'clamp(280px, 86.1vw, 323px)', // Responsive width: 86.1% of 375px
+            height: 'clamp(44px, 6vh, 52px)', // Responsive height - decreased
+            borderRadius: '20.25px',
+            background: (razorpayLoaded && selectedSlotIndex !== null && selectedDuration !== null)
+              ? 'linear-gradient(135deg, rgba(30, 255, 0, 0.6) 0%, rgba(13, 255, 0, 0.6) 100%)'
+              : 'rgba(102, 102, 102, 0.5)',
+            border: '0.5px solid rgba(133, 133, 133, 0.5)',
+            backdropFilter: 'blur(17.5px)',
+            boxShadow: (razorpayLoaded && selectedSlotIndex !== null && selectedDuration !== null)
+              ? '0 4px 12px rgba(30, 255, 0, 0.3)'
+              : 'none',
+            transition: 'all 0.2s ease',
+            cursor: (razorpayLoaded && selectedSlotIndex !== null && selectedDuration !== null) ? 'pointer' : 'not-allowed',
+            opacity: (razorpayLoaded && selectedSlotIndex !== null && selectedDuration !== null) ? 1 : 0.6,
+            outline: 'none'
+          }}
+          onMouseEnter={(e) => {
+            if (razorpayLoaded && selectedSlotIndex !== null && selectedDuration !== null) {
+              e.currentTarget.style.opacity = '0.9';
+              e.currentTarget.style.transform = 'scale(0.98)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (razorpayLoaded && selectedSlotIndex !== null && selectedDuration !== null) {
+              e.currentTarget.style.opacity = '1';
+              e.currentTarget.style.transform = 'scale(1)';
+            }
+          }}
+        >
+          <div
+            className="w-full h-full rounded-[20.25px] flex items-center justify-center"
+            style={{
+              background: 'transparent',
+              borderRadius: '20.25px'
+            }}
+          >
+            <span
+              className="font-medium"
+              style={{
+                color: '#FFFFFF',
+                fontSize: 'clamp(15px, 4vw, 18px)',
+                letterSpacing: '0.3px'
+              }}
+            >
+              {razorpayLoaded ? 'Book Slots' : 'Loading...'}
             </span>
           </div>
-        </div>
+        </button>
 
       </div>
       
@@ -1051,3 +1176,4 @@ export default function Home() {
     </MobileContainer>
   );
 }
+

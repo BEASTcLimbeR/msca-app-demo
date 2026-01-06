@@ -1,13 +1,15 @@
 'use client';
 
 import MobileContainer from '@/components/MobileContainer';
-import { Bell, Search, ChevronDown, Home as HomeIcon, FileText, Calendar, User } from 'lucide-react';
+import { Bell, Search, ChevronDown, Home as HomeIcon, FileText, Calendar, User, QrCode } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date().toDateString());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -16,6 +18,7 @@ export default function Home() {
   
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  
   
   // Get current week dates - current date always in the middle (4th position)
   const currentWeek = useMemo(() => {
@@ -417,514 +420,123 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Below Dates Card - matching transparent-rectangle.svg with same transparency as slot card */}
-        {/* From transparent-rectangle.svg: width="321" height="116" rx="19.5" */}
+        {/* Check-in and Check-out Cards - Below Calendar */}
         <div 
           className="absolute"
           style={{
-            left: '25.75px', // 15.75 (slot card left) + 10
-            top: '285px', // Moved down slightly from 269.75px
-            width: '321px',
-            height: '116px',
-            borderRadius: '19.5px',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(102, 102, 102, 1) 100%)',
-            padding: '1px',
-            backdropFilter: 'blur(17.5px)'
+            left: 'clamp(20px, 5.3vw, 26px)',
+            top: 'clamp(280px, 37.8vh, 298px)', // Positioned below the calendar card
+            width: 'clamp(280px, 86.1vw, 323px)',
+            height: 'clamp(120px, 16vh, 130px)', // Increased height
+            borderRadius: '20px',
+            background: 'rgba(30, 30, 30, 0.6)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+            padding: 'clamp(16px, 4.3vw, 20px)', // Increased padding
+            display: 'flex',
+            gap: 'clamp(12px, 3.2vw, 16px)'
           }}
         >
-          {/* Inner content - matching slot card transparency level (0.4 opacity) */}
+          {/* Checked in Card */}
           <div
-            className="w-full h-full rounded-[19.5px] flex flex-col gap-2 justify-center items-center"
+            className="flex-1"
             style={{
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.4) 100%)',
-              padding: '12px'
-            }}
-          >
-            {/* Row 1: Red and Green tabs - Responsive */}
-            <div className="flex gap-2 justify-center w-full">
-              {/* Red Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(196, 0, 0, 0.3)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      7:00
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      AM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#797979',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Almost Full
-                    </span>
-                    {/* Horizontal divider */}
-                    <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#797979',
-                        opacity: 0.5
-                      }}
-                    />
-                    <span
-                      className=""
-                      style={{
-                        color: '#D8D8D8',
-                        fontSize: '10px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      4 Slots Remaining
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Green Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(13, 255, 0, 0.4)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      9:30
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      AM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#FFFFFF',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Available
-                    </span>
-                    {/* Horizontal divider */}
-                    <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#FFFFFF',
-                        opacity: 0.5
-                      }}
-                    />
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      40 Slots Remaining
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Row 2: Yellow and Grey tabs - Responsive */}
-            <div className="flex gap-2 justify-center w-full">
-              {/* Yellow Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(255, 200, 0, 0.4)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      12:00
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      PM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#FFFFFF',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Limited
-                    </span>
-                    {/* Horizontal divider */}
-                    <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#FFFFFF',
-                        opacity: 0.5
-                      }}
-                    />
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '8px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400,
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      15 Slots Remaining
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Grey Tab - Responsive sizing with Neomorphic Effect */}
-              <div
-                className="relative"
-                style={{
-                  width: 'clamp(120px, 35.7vw, 134px)', // Responsive width
-                  height: 'clamp(40px, 5.6vh, 44px)', // Responsive height
-                  borderRadius: '19.5px',
-                  background: 'rgba(255, 255, 255, 0.4)',
-                  backdropFilter: 'blur(17.5px)',
-                  border: 'none',
-                  boxShadow: `
-                    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
-                    inset -3px -3px 6px rgba(255, 255, 255, 0.1),
-                    6px 6px 12px rgba(0, 0, 0, 0.2),
-                    -3px -3px 6px rgba(255, 255, 255, 0.05)
-                  `
-                }}
-              >
-                <div
-                  className="w-full h-full rounded-[19.5px] flex items-center px-2"
-                  style={{
-                    background: 'transparent'
-                  }}
-                >
-                  {/* Left side - Time */}
-                  <div className="flex flex-col items-center justify-center" style={{ width: '40px' }}>
-                    <span
-                      className="font-medium"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      12:00
-                    </span>
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '9px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2'
-                      }}
-                    >
-                      PM
-                    </span>
-                  </div>
-
-                  {/* Vertical divider */}
-                  <div
-                    className="mx-1"
-                    style={{
-                      width: '0.5px',
-                      height: '32px',
-                      background: '#FFFFFF',
-                      opacity: 0.5
-                    }}
-                  />
-
-                  {/* Right side - Status info */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    <span
-                      className="mb-0.5"
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 500
-                      }}
-                    >
-                      Full
-                    </span>
-                    {/* Horizontal divider */}
-                    <div
-                      className="mb-0.5"
-                      style={{
-                        width: '100%',
-                        height: '0.5px',
-                        background: '#FFFFFF',
-                        opacity: 0.5
-                      }}
-                    />
-                    <span
-                      className=""
-                      style={{
-                        color: '#FFFFFF',
-                        fontSize: '10px',
-                        letterSpacing: '0.2px',
-                        lineHeight: '1.2',
-                        fontWeight: 400
-                      }}
-                    >
-                      Booked
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Registration Tab - Mobile-First Responsive with Link */}
-        <Link href="/register">
-          <div
-            className="absolute cursor-pointer"
-            style={{
-              left: 'clamp(20px, 6.9vw, 26px)', // Responsive left positioning
-              top: 'clamp(380px, 52.7vh, 415px)', // Responsive top positioning
-              width: 'clamp(280px, 86.1vw, 323px)', // Responsive width: 86.1% of 375px
-              height: 'clamp(60px, 8.8vh, 69px)', // Responsive height
-              borderRadius: '20.25px',
-              background: 'linear-gradient(180deg, rgba(90, 104, 112, 0.4) 0%, rgba(13, 55, 60, 0.4) 100%)',
-              border: '0.5px solid rgba(133, 133, 133, 0.5)',
-              backdropFilter: 'blur(17.5px)',
-              boxShadow: 'inset 0 0 0 0.5px rgba(0, 0, 0, 0.3)',
-              transition: 'opacity 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-          >
-            <div
-              className="w-full h-full rounded-[20.25px] flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(180deg, rgba(90, 104, 112, 0.4) 0%, rgba(13, 55, 60, 0.4) 100%)'
-              }}
-            >
-              <span
-                className="font-medium"
-                style={{
-                  color: '#D8D8D8',
-                  fontSize: '16px',
-                  letterSpacing: '0.3px'
-                }}
-              >
-                Click here to register
-              </span>
-            </div>
-          </div>
-        </Link>
-
-        {/* Book Slots Tab - Mobile-First Responsive */}
-        {/* From book-slots-tab.svg: width="320" height="34" */}
-        <div
-          className="absolute"
-          style={{
-            left: 'clamp(22px, 7.3vw, 27.5px)', // Responsive left positioning
-            top: 'clamp(450px, 62.7vh, 494px)', // Responsive top positioning
-            width: 'clamp(280px, 85.3vw, 320px)', // Responsive width: 85.3% of 375px
-            height: 'clamp(30px, 4.3vh, 34px)', // Responsive height
-            borderRadius: '17px',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(102, 102, 102, 0.5) 100%)',
-            padding: '1px',
-            backdropFilter: 'blur(17.5px)'
-          }}
-        >
-          <div
-            className="w-full h-full rounded-[17px] flex items-center justify-center"
-            style={{
-              background: 'rgba(30, 255, 0, 0.4)', // #1EFF00 with 0.4 opacity for visibility
-              borderRadius: '17px'
+              borderRadius: '15px',
+              background: 'rgba(13, 255, 0, 0.15)',
+              border: '1px solid rgba(13, 255, 0, 0.3)',
+              padding: 'clamp(20px, 5.3vw, 24px)', // Increased padding
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
             }}
           >
             <span
-              className="font-medium"
               style={{
-                color: '#D8D8D8',
-                fontSize: '14px',
-                letterSpacing: '0.3px'
+                color: 'rgba(13, 255, 0, 0.9)',
+                fontSize: 'clamp(12px, 3.2vw, 14px)', // Text size unchanged
+                fontWeight: '500',
+                marginBottom: 'clamp(8px, 2.1vw, 10px)', // Slightly increased spacing
+                letterSpacing: '0.2px'
               }}
             >
-              Book Slots
+              Checked in
+            </span>
+            {/* Horizontal divider */}
+            <div
+              style={{
+                width: '100%',
+                height: '0.5px',
+                background: 'rgba(255, 255, 255, 0.3)',
+                marginBottom: 'clamp(8px, 2.1vw, 10px)' // Slightly increased spacing
+              }}
+            />
+            <span
+              style={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: 'clamp(11px, 2.9vw, 13px)', // Text size unchanged
+                fontWeight: '400',
+                letterSpacing: '0.2px'
+              }}
+            >
+              {(() => {
+                const selectedDateObj = new Date(selectedDate);
+                const dayName = dayNames[selectedDateObj.getDay()];
+                return `${dayName} 7:00 AM`;
+              })()}
+            </span>
+          </div>
+
+          {/* Checked out Card */}
+          <div
+            className="flex-1"
+            style={{
+              borderRadius: '15px',
+              background: 'rgba(13, 255, 0, 0.15)',
+              border: '1px solid rgba(13, 255, 0, 0.3)',
+              padding: 'clamp(20px, 5.3vw, 24px)', // Increased padding
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            <span
+              style={{
+                color: 'rgba(13, 255, 0, 0.9)',
+                fontSize: 'clamp(12px, 3.2vw, 14px)', // Text size unchanged
+                fontWeight: '500',
+                marginBottom: 'clamp(8px, 2.1vw, 10px)', // Slightly increased spacing
+                letterSpacing: '0.2px'
+              }}
+            >
+              Checked out
+            </span>
+            {/* Horizontal divider */}
+            <div
+              style={{
+                width: '100%',
+                height: '0.5px',
+                background: 'rgba(255, 255, 255, 0.3)',
+                marginBottom: 'clamp(8px, 2.1vw, 10px)' // Slightly increased spacing
+              }}
+            />
+            <span
+              style={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: 'clamp(11px, 2.9vw, 13px)', // Text size unchanged
+                fontWeight: '400',
+                letterSpacing: '0.2px'
+              }}
+            >
+              {(() => {
+                const selectedDateObj = new Date(selectedDate);
+                const dayName = dayNames[selectedDateObj.getDay()];
+                return `${dayName} 7:00 PM`;
+              })()}
             </span>
           </div>
         </div>
@@ -973,22 +585,22 @@ export default function Home() {
               </div>
 
               {/* Document Icon - responsive sizing */}
-              <div className="flex items-center justify-center" style={{ width: 'clamp(28px, 9.1%, 34px)', height: 'clamp(28px, 9.1%, 34px)' }}>
+              <Link href="/functions" className="flex items-center justify-center" style={{ width: 'clamp(28px, 9.1%, 34px)', height: 'clamp(28px, 9.1%, 34px)' }}>
                 <FileText size={20} strokeWidth={2} style={{ color: '#C0D4FB' }} />
-              </div>
+              </Link>
 
               {/* Spacer for QR code (centered) */}
               <div style={{ width: 'clamp(50px, 20.3%, 59px)' }} />
 
               {/* Calendar Icon - responsive sizing */}
-              <div className="flex items-center justify-center" style={{ width: 'clamp(20px, 6.7%, 25px)', height: 'clamp(20px, 6.7%, 25px)' }}>
+              <Link href="/calendar" className="flex items-center justify-center" style={{ width: 'clamp(20px, 6.7%, 25px)', height: 'clamp(20px, 6.7%, 25px)' }}>
                 <Calendar size={20} strokeWidth={2} style={{ color: '#C0D4FB' }} />
-              </div>
+              </Link>
 
               {/* Profile Icon - responsive sizing */}
-              <div className="flex items-center justify-center" style={{ width: 'clamp(28px, 9.1%, 34px)', height: 'clamp(28px, 9.1%, 34px)' }}>
+              <Link href="/profile" className="flex items-center justify-center" style={{ width: 'clamp(28px, 9.1%, 34px)', height: 'clamp(28px, 9.1%, 34px)' }}>
                 <User size={20} strokeWidth={2} style={{ color: '#C0D4FB' }} />
-              </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -1031,6 +643,25 @@ export default function Home() {
               zIndex: 1
             }}
           />
+          {/* QR Code Icon - Centered in the circle */}
+          <div
+            className="absolute flex items-center justify-center"
+            style={{
+              left: '50%',
+              top: '45%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 10,
+              pointerEvents: 'none'
+            }}
+          >
+            <QrCode 
+              size={22} 
+              style={{ 
+                color: '#1F93F2',
+                strokeWidth: 2.5
+              }} 
+            />
+          </div>
           {/* Inner white circle with blur - stdDeviation=1.95 */}
           <div
             className="absolute rounded-full"
@@ -1045,9 +676,9 @@ export default function Home() {
               zIndex: 2
             }}
           />
-          {/* QR Code icon will be added here */}
         </div>
     </div>
     </MobileContainer>
   );
 }
+
