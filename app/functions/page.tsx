@@ -4,11 +4,11 @@ import MobileContainer from '@/components/MobileContainer';
 import { Bell, Search, Home as HomeIcon, FileText, Calendar, User, QrCode } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useSearchParams } from 'next/navigation';
 
-export default function FunctionsPage() {
+function FunctionsContent() {
   const [showQRModal, setShowQRModal] = useState(false); // QR code modal state
   const searchParams = useSearchParams();
   const isStaff = searchParams.get('role') === 'staff';
@@ -567,6 +567,14 @@ export default function FunctionsPage() {
       </div>
     )}
     </>
+  );
+}
+
+export default function FunctionsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <FunctionsContent />
+    </Suspense>
   );
 }
 

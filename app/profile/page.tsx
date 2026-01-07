@@ -4,12 +4,12 @@ import MobileContainer from '@/components/MobileContainer';
 import { Bell, Search, Home as HomeIcon, FileText, Calendar, User, QrCode, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
-export default function ProfilePage() {
+function ProfileContent() {
   const [showQRModal, setShowQRModal] = useState(false); // QR code modal state
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -697,6 +697,14 @@ export default function ProfilePage() {
       </div>
     )}
     </>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }
 
