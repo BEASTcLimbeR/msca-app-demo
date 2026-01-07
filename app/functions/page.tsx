@@ -6,9 +6,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useSearchParams } from 'next/navigation';
 
 export default function FunctionsPage() {
   const [showQRModal, setShowQRModal] = useState(false); // QR code modal state
+  const searchParams = useSearchParams();
+  const isStaff = searchParams.get('role') === 'staff';
+  
+  // Card titles based on role
+  const cardTitles = isStaff 
+    ? ['View members', 'Inventory Management', 'Log book', 'New Entry']
+    : ['Daily tasks', 'Stopwatch', 'Logbook', 'Movement Analysis'];
   
   return (
     <>
@@ -177,7 +185,7 @@ export default function FunctionsPage() {
                   textAlign: 'center'
                 }}
               >
-                Daily tasks
+                {cardTitles[0]}
               </span>
             </div>
 
@@ -216,7 +224,7 @@ export default function FunctionsPage() {
                   textAlign: 'center'
                 }}
               >
-                Stopwatch
+                {cardTitles[1]}
               </span>
             </div>
 
@@ -255,7 +263,7 @@ export default function FunctionsPage() {
                   textAlign: 'center'
                 }}
               >
-                Logbook
+                {cardTitles[2]}
               </span>
             </div>
 
@@ -294,7 +302,7 @@ export default function FunctionsPage() {
                   textAlign: 'center'
                 }}
               >
-                Movement Analysis
+                {cardTitles[3]}
               </span>
             </div>
           </div>

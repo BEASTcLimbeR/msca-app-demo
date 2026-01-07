@@ -6,11 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function Home() {
-  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date().toDateString());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());

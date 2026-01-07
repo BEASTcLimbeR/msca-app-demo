@@ -6,9 +6,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 export default function ProfilePage() {
   const [showQRModal, setShowQRModal] = useState(false); // QR code modal state
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isStaff = searchParams.get('role') === 'staff';
+  
+  // Name based on role
+  const userName = isStaff ? 'Dhanashree Lekurwale' : 'Rutvij Deo';
   
   return (
     <>
@@ -186,7 +194,7 @@ export default function ProfilePage() {
                 marginBottom: 'clamp(8px, 2.1vw, 10px)'
               }}
             >
-              Rutvij Deo
+              {userName}
             </h2>
 
             {/* Email */}
@@ -400,6 +408,7 @@ export default function ProfilePage() {
             {/* Logout */}
             <div
               className="cursor-pointer"
+              onClick={() => router.push('/')}
               style={{
                 padding: 'clamp(16px, 4.3vw, 20px)',
                 display: 'flex',
